@@ -3,226 +3,666 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Espacio SE - Exploración 3D</title>
+  <meta name="description" content="SENA Manizales - Experiencia 3D Inmersiva inspirada en Jujutsu Kaisen">
+  <meta name="keywords" content="SENA, 3D, Manizales, Jujutsu Kaisen, experiencia inmersiva">
+  <title>SENA 3D - Templo Malevolo | Experiencia Inmersiva</title>
+  
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome para iconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Inter', sans-serif; background: #0a0f1a; }
-    #app { width: 100%; height: 100%; }
-    canvas { display: block; width: 100%; height: 100%; }
-
-    #ui-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 10; opacity: 0; transition: opacity 0.8s ease; }
-    #ui-overlay.visible { opacity: 1; }
-
+    /* ============================================
+       ESTILOS GLOBALES - TEMA OSCURO JUJUTSU KAISEN
+       ============================================ */
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+      background: #050008;
+      color: #ffffff;
+      cursor: none;
+    }
+    
+    /* Scrollbar personalizado */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: rgba(100, 180, 255, 0.1);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: rgba(100, 180, 255, 0.4);
+      border-radius: 3px;
+    }
+    
+    /* ============================================
+       LOADING SCREEN - ESTILO JUJUTSU KAISEN
+       ============================================ */
+    
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #050008 0%, #0a0a1a 50%, #1a0508 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      gap: 30px;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+    
+    #loading-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    
+    .loading-content {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    .loading-logo {
+      width: 120px;
+      height: 120px;
+      position: relative;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .loading-logo::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 3px solid rgba(139, 0, 0, 0.3);
+      border-top-color: #8b0000;
+      border-radius: 50%;
+      animation: spin 1.5s linear infinite;
+    }
+    
+    .loading-logo::after {
+      content: '';
+      position: absolute;
+      inset: 15px;
+      border: 2px solid rgba(75, 0, 130, 0.3);
+      border-top-color: #4b0082;
+      border-radius: 50%;
+      animation: spin 2s linear infinite reverse;
+    }
+    
+    .loading-logo-icon {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      color: #00ffff;
+      text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    .loading-bar-container {
+      width: 250px;
+      height: 6px;
+      background: rgba(100, 180, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      border: 1px solid rgba(100, 180, 255, 0.2);
+    }
+    
+    .loading-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #8b0000, #4b0082, #00ffff);
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 3px;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    }
+    
+    #loading-text {
+      color: #00ffff;
+      font-size: 14px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      font-weight: 600;
+      text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+    
+    /* ============================================
+       INTRO CONTAINER - FONDO PARA LA INTRO
+       ============================================ */
+    
+    #intro {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      overflow: hidden;
+      background: linear-gradient(135deg, #050008 0%, #0a0a1a 100%);
+      display: none;
+    }
+    
+    #intro-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* ============================================
+       APP CONTAINER - CONTENEDOR PRINCIPAL
+       ============================================ */
+    
+    #app {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* ============================================
+       UI OVERLAY - INTERFAZ DE USUARIO
+       ============================================ */
+    
+    #ui-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+    
+    #ui-overlay.visible {
+      opacity: 1;
+    }
+    
     .panel {
       pointer-events: auto;
-      background: rgba(8, 12, 24, 0.88);
-      border: 1px solid rgba(100, 180, 255, 0.15);
-      border-radius: 10px;
-      padding: 12px 14px;
+      background: rgba(10, 15, 26, 0.92);
+      border: 1px solid rgba(100, 180, 255, 0.2);
+      border-radius: 12px;
+      padding: 16px 18px;
       color: #d0e0f8;
-      font-size: 12px;
-      backdrop-filter: blur(10px);
-      line-height: 1.4;
+      font-size: 13px;
+      backdrop-filter: blur(12px);
+      line-height: 1.5;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
-
+    
+    /* Panel de controles */
     #controls-panel {
       position: absolute;
-      top: 16px;
-      left: 16px;
-      width: 200px;
+      top: 20px;
+      left: 20px;
+      width: 220px;
     }
-
+    
     #controls-panel h3 {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
-      color: #64b4ff;
-      margin-bottom: 8px;
-      letter-spacing: 1.5px;
+      color: #00ffff;
+      margin-bottom: 12px;
+      letter-spacing: 2px;
       text-transform: uppercase;
-      border-bottom: 1px solid rgba(100, 180, 255, 0.15);
-      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(100, 180, 255, 0.2);
+      padding-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-
+    
+    #controls-panel h3::before {
+      content: '\f044';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      font-size: 14px;
+    }
+    
     .ctrl-grid {
       display: grid;
       grid-template-columns: auto 1fr;
-      gap: 4px 10px;
+      gap: 6px 12px;
       align-items: center;
     }
-
+    
     .ctrl-key {
-      background: rgba(100, 180, 255, 0.12);
-      border: 1px solid rgba(100, 180, 255, 0.25);
-      border-radius: 4px;
-      padding: 2px 8px;
+      background: rgba(139, 0, 0, 0.15);
+      border: 1px solid rgba(139, 0, 0, 0.3);
+      border-radius: 6px;
+      padding: 4px 10px;
       font-family: 'SF Mono', 'Consolas', monospace;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 600;
-      color: #64b4ff;
+      color: #ff6b6b;
       text-align: center;
       white-space: nowrap;
+      transition: all 0.2s ease;
     }
-
+    
+    .ctrl-key:hover {
+      background: rgba(139, 0, 0, 0.25);
+      border-color: rgba(139, 0, 0, 0.5);
+      transform: translateY(-1px);
+    }
+    
     .ctrl-desc {
-      font-size: 11px;
+      font-size: 12px;
       color: #8aa8c8;
     }
-
+    
+    /* Panel de ubicación */
     #room-panel {
       position: absolute;
-      top: 16px;
-      right: 16px;
-      min-width: 180px;
+      top: 20px;
+      right: 20px;
+      min-width: 200px;
       text-align: center;
-      background: linear-gradient(135deg, rgba(100, 180, 255, 0.12), rgba(8, 12, 24, 0.88));
-      border-color: rgba(100, 180, 255, 0.25);
+      background: linear-gradient(135deg, rgba(75, 0, 130, 0.15), rgba(10, 15, 26, 0.92));
+      border-color: rgba(75, 0, 130, 0.3);
     }
-
+    
     #room-panel h3 {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 600;
-      color: rgba(100, 180, 255, 0.6);
+      color: rgba(75, 0, 130, 0.8);
+      margin-bottom: 6px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    
+    #room-panel h3::before {
+      content: '\f015';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+    }
+    
+    #room-name {
+      font-size: 18px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #8b0000, #4b0082);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       margin-bottom: 4px;
       letter-spacing: 1px;
-      text-transform: uppercase;
     }
-
-    #room-name {
-      font-size: 16px;
-      font-weight: 700;
-      color: #64b4ff;
-      margin-bottom: 2px;
-    }
-
+    
     #room-info {
-      font-size: 11px;
+      font-size: 12px;
       color: #6a8ab0;
     }
-
+    
+    /* Barra de estado */
     #status-bar {
       position: absolute;
-      bottom: 16px;
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 20px;
+      gap: 24px;
       align-items: center;
-      padding: 8px 18px;
+      padding: 10px 20px;
+      background: rgba(10, 15, 26, 0.95);
+      border: 1px solid rgba(100, 180, 255, 0.2);
+      border-radius: 10px;
+      backdrop-filter: blur(12px);
     }
-
+    
     #status-bar span {
       font-family: 'SF Mono', 'Consolas', monospace;
-      font-size: 11px;
+      font-size: 12px;
       color: #6a8ab0;
     }
-
-    #status-bar .fps { color: #64b4ff; font-weight: 600; }
-
+    
+    #status-bar .fps {
+      color: #00ffff;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    
+    /* Mute indicator */
+    #mute-indicator {
+      cursor: pointer;
+      font-size: 18px;
+      margin-right: 8px;
+      transition: transform 0.2s ease;
+    }
+    
+    #mute-indicator:hover {
+      transform: scale(1.2);
+    }
+    
+    /* Weather indicator */
+    #weather-indicator {
+      margin-right: 8px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    /* Crosshair */
     #crosshair {
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 6px;
-      height: 6px;
+      width: 8px;
+      height: 8px;
       pointer-events: none;
       z-index: 20;
       opacity: 0;
-      transition: opacity 0.15s;
-      background: rgba(255, 255, 255, 0.9);
+      transition: opacity 0.15s, transform 0.1s ease;
+      background: radial-gradient(circle, rgba(0, 255, 255, 0.9) 0%, transparent 70%);
       border-radius: 50%;
-      box-shadow: 0 0 6px rgba(100, 180, 255, 0.8);
+      box-shadow: 
+        0 0 0 2px rgba(0, 255, 255, 0.3),
+        0 0 10px rgba(0, 255, 255, 0.5),
+        0 0 20px rgba(0, 255, 255, 0.3);
     }
-    #crosshair.active { opacity: 1; }
-
+    
+    #crosshair.active {
+      opacity: 1;
+    }
+    
+    #crosshair::before,
+    #crosshair::after {
+      content: '';
+      position: absolute;
+      background: rgba(0, 255, 255, 0.8);
+    }
+    
+    #crosshair::before {
+      width: 2px;
+      height: 16px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+    
+    #crosshair::after {
+      width: 16px;
+      height: 2px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+    
+    /* Interaction hint */
     #interaction-hint {
       position: fixed;
-      bottom: 80px;
+      bottom: 100px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(8, 12, 24, 0.85);
-      border: 1px solid rgba(100, 180, 255, 0.3);
-      border-radius: 8px;
-      padding: 10px 20px;
-      color: #64b4ff;
-      font-size: 12px;
+      background: rgba(10, 15, 26, 0.95);
+      border: 1px solid rgba(0, 255, 255, 0.4);
+      border-radius: 10px;
+      padding: 12px 24px;
+      color: #00ffff;
+      font-size: 14px;
+      font-weight: 600;
       display: none;
       z-index: 15;
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 255, 255, 0.2);
     }
+    
     #interaction-hint.visible {
       display: block;
-      animation: fadeIn 0.2s ease;
+      animation: fadeIn 0.3s ease;
     }
-
+    
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateX(-50%) translateY(6px); }
-      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
     }
-
-    #loading-screen {
+    
+    /* Minimap */
+    .minimap {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: 180px;
+      height: 180px;
+      border: 1px solid rgba(100, 180, 255, 0.3);
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(5, 8, 16, 0.95);
+      pointer-events: none;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    
+    .minimap canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    
+    /* ============================================
+       ESTILOS PARA LA INTRO (OPCIONAL - FALLBACK)
+       ============================================ */
+    
+    .intro-fallback {
       position: fixed;
       inset: 0;
-      background: #050810;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 100;
-      gap: 20px;
-      transition: opacity 0.5s ease;
+      background: linear-gradient(135deg, #050008 0%, #0a0a1a 100%);
+      z-index: 999;
+      color: white;
+      text-align: center;
     }
-    #loading-screen.hidden { opacity: 0; pointer-events: none; }
-
-    .loader {
-      width: 40px;
-      height: 40px;
-      border: 2px solid rgba(100, 180, 255, 0.1);
-      border-top-color: #64b4ff;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+    
+    .intro-fallback h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 8rem;
+      font-weight: 400;
+      background: linear-gradient(135deg, #8b0000, #4b0082, #00ffff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 20px;
+      animation: glow 3s ease-in-out infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    #loading-text {
-      color: #64b4ff;
-      font-size: 12px;
-      letter-spacing: 2px;
+    
+    @keyframes glow {
+      0%, 100% { text-shadow: 0 0 20px rgba(0, 255, 255, 0.5); }
+      50% { text-shadow: 0 0 40px rgba(0, 255, 255, 0.8); }
+    }
+    
+    .intro-fallback p {
+      font-size: 1.5rem;
+      color: #00ffff;
+      letter-spacing: 4px;
       text-transform: uppercase;
+      margin-bottom: 40px;
     }
-
-    .minimap {
-      position: absolute;
-      bottom: 16px;
-      right: 16px;
-      width: 160px;
-      height: 160px;
-      border: 1px solid rgba(100, 180, 255, 0.2);
-      border-radius: 8px;
-      overflow: hidden;
-      background: rgba(5, 8, 16, 0.9);
+    
+    .intro-fallback .loader {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(100, 180, 255, 0.1);
+      border-top-color: #00ffff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    /* ============================================
+       RESPONSIVE DESIGN
+       ============================================ */
+    
+    @media (max-width: 768px) {
+      #controls-panel {
+        width: 180px;
+        top: 12px;
+        left: 12px;
+      }
+      
+      #room-panel {
+        min-width: 160px;
+        top: 12px;
+        right: 12px;
+      }
+      
+      #status-bar {
+        bottom: 12px;
+        padding: 8px 16px;
+        gap: 16px;
+      }
+      
+      .minimap {
+        width: 140px;
+        height: 140px;
+        bottom: 12px;
+        right: 12px;
+      }
+      
+      .loading-logo {
+        width: 100px;
+        height: 100px;
+      }
+      
+      .loading-bar-container {
+        width: 200px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      #controls-panel {
+        display: none;
+      }
+      
+      #room-panel {
+        display: none;
+      }
+      
+      #status-bar {
+        display: none;
+      }
+      
+      .minimap {
+        display: none;
+      }
+    }
+    
+    /* ============================================
+       EFECTOS ESPECIALES
+       ============================================ */
+    
+    /* Cursor personalizado */
+    .custom-cursor {
+      position: fixed;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(0, 255, 255, 0.3);
+      border: 2px solid #00ffff;
       pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.1s ease, opacity 0.1s ease;
+      transform: translate(-50%, -50%);
     }
-    .minimap canvas { width: 100%; height: 100%; display: block; }
+    
+    .custom-cursor:hover {
+      background: rgba(0, 255, 255, 0.5);
+      transform: translate(-50%, -50%) scale(1.2);
+    }
+    
+    /* Tooltip */
+    .tooltip {
+      position: absolute;
+      background: rgba(10, 15, 26, 0.98);
+      border: 1px solid rgba(100, 180, 255, 0.3);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #d0e0f8;
+      pointer-events: none;
+      z-index: 20;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      backdrop-filter: blur(8px);
+    }
+    
+    .tooltip.visible {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
-  <div id="loading-screen" class="hidden">
-    <div class="loader"></div>
-    <div id="loading-text">Cargando entorno</div>
+  <!-- Loading Screen -->
+  <div id="loading-screen">
+    <div class="loading-content">
+      <div class="loading-logo">
+        <div class="loading-logo-icon">
+          <i class="fas fa-eye"></i>
+        </div>
+      </div>
+      <div class="loading-bar-container">
+        <div class="loading-bar" id="loading-bar"></div>
+      </div>
+      <div id="loading-text">Cargando Templo Malevolo...</div>
+    </div>
   </div>
 
-  <div id="intro" style="position:fixed;inset:0;z-index:200;overflow:hidden;background:#050008;">
-    <div id="intro-canvas" style="position:absolute;inset:0;width:100%;height:100%;"></div>
+  <!-- Intro Container -->
+  <div id="intro">
+    <div id="intro-canvas"></div>
   </div>
 
+  <!-- Crosshair -->
   <div id="crosshair"></div>
-  <div id="interaction-hint">Presiona <strong>E</strong> para abrir puerta</div>
+  
+  <!-- Interaction Hint -->
+  <div id="interaction-hint">Presiona <strong>E</strong> para interactuar</div>
 
+  <!-- UI Overlay -->
   <div id="ui-overlay">
+    <!-- Controls Panel -->
     <div id="controls-panel" class="panel">
       <h3>Controles</h3>
       <div class="ctrl-grid">
@@ -241,25 +681,45 @@
       </div>
     </div>
 
+    <!-- Room Panel -->
     <div id="room-panel" class="panel">
       <h3>Ubicación</h3>
-      <div id="room-name">Exterior</div>
-      <div id="room-info">Campus SENA Manizales</div>
+      <div id="room-name">SENA Manizales</div>
+      <div id="room-info">Campus 3D - Templo Malevolo</div>
     </div>
 
+    <!-- Status Bar -->
     <div id="status-bar" class="panel">
       <span id="mute-indicator" style="cursor:pointer;font-size:18px;margin-right:8px;">🔊</span>
       <span id="weather-indicator" style="margin-right:8px;font-size:12px;color:#88ff99;">☀️ Despejado</span>
-      <span id="coords">X: 0 &middot; Z: 0 &middot; Y: 0</span>
+      <span id="coords">X: 0 · Z: 0 · Y: 0</span>
       <span class="fps" id="fps">FPS: --</span>
     </div>
   </div>
 
+  <!-- Minimap -->
   <div class="minimap">
     <canvas id="minimap"></canvas>
   </div>
 
+  <!-- App Container -->
   <div id="app"></div>
+
+  <!-- Scripts -->
+  <script type="module">
+    // Actualizar barra de carga
+    const loadingBar = document.getElementById('loading-bar');
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.random() * 5;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+      }
+      loadingBar.style.width = `${progress}%`;
+    }, 100);
+  </script>
+  
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
