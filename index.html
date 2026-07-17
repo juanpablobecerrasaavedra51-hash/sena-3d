@@ -3,29 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="SENA Manizales - Experiencia 3D Inmersiva inspirada en Jujutsu Kaisen">
-  <meta name="keywords" content="SENA, 3D, Manizales, Jujutsu Kaisen, experiencia inmersiva">
-  <title>SENA 3D - Templo Malevolo | Experiencia Inmersiva</title>
+  <meta name="description" content="SENA Manizales - Experiencia 3D Inmersiva con VR, NPCs y campus completo">
+  <title>SENA 3D - Experiencia Inmersiva</title>
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
   
-  <!-- Font Awesome para iconos -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Font Awesome desde CDN con crossorigin -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
+        integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZ2JDJFifldBnToc5wPI4orW4liTikd4WrS2asbLmVcZT0MpHX4evM0QD9Q==" 
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
   
   <style>
-    /* ============================================
-       ESTILOS GLOBALES - TEMA OSCURO JUJUTSU KAISEN
-       ============================================ */
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       width: 100%;
       height: 100%;
@@ -33,44 +25,25 @@
       font-family: 'Inter', sans-serif;
       background: #050008;
       color: #ffffff;
-      cursor: none;
     }
     
-    /* Scrollbar personalizado */
-    ::-webkit-scrollbar {
-      width: 6px;
-    }
-    
-    ::-webkit-scrollbar-track {
-      background: rgba(100, 180, 255, 0.1);
-    }
-    
-    ::-webkit-scrollbar-thumb {
-      background: rgba(100, 180, 255, 0.4);
-      border-radius: 3px;
-    }
-    
-    /* ============================================
-       LOADING SCREEN - ESTILO JUJUTSU KAISEN
-       ============================================ */
-    
-    #loading-screen {
+    /* Loading Screen */
+    .loading-screen {
       position: fixed;
       inset: 0;
-      background: linear-gradient(135deg, #050008 0%, #0a0a1a 50%, #1a0508 100%);
+      background: linear-gradient(135deg, #050008 0%, #0a0a1a 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 1000;
-      gap: 30px;
-      transition: opacity 0.8s ease, visibility 0.8s ease;
+      z-index: 10000;
     }
     
-    #loading-screen.hidden {
+    .loading-screen.hidden {
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
+      transition: opacity 0.8s ease;
     }
     
     .loading-content {
@@ -119,14 +92,8 @@
       text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
     }
     
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
     
     .loading-bar-container {
       width: 250px;
@@ -152,33 +119,15 @@
       letter-spacing: 3px;
       text-transform: uppercase;
       font-weight: 600;
-      text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
     }
     
-    /* ============================================
-       INTRO CONTAINER - FONDO PARA LA INTRO
-       ============================================ */
-    
-    #intro {
-      position: fixed;
-      inset: 0;
-      z-index: 999;
-      overflow: hidden;
-      background: linear-gradient(135deg, #050008 0%, #0a0a1a 100%);
-      display: none;
+    .loading-tips {
+      color: #8aa8c8;
+      font-size: 12px;
+      margin-top: 10px;
     }
     
-    #intro-canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-    
-    /* ============================================
-       APP CONTAINER - CONTENEDOR PRINCIPAL
-       ============================================ */
-    
+    /* App Container */
     #app {
       width: 100%;
       height: 100%;
@@ -191,10 +140,24 @@
       height: 100%;
     }
     
-    /* ============================================
-       UI OVERLAY - INTERFAZ DE USUARIO
-       ============================================ */
+    /* Intro Container */
+    #intro {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      overflow: hidden;
+      background: linear-gradient(135deg, #050008 0%, #0a0a1a 100%);
+      display: none;
+    }
     
+    #intro-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* UI Overlay */
     #ui-overlay {
       position: fixed;
       inset: 0;
@@ -221,33 +184,11 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
     
-    /* Panel de controles */
     #controls-panel {
       position: absolute;
       top: 20px;
       left: 20px;
       width: 220px;
-    }
-    
-    #controls-panel h3 {
-      font-size: 12px;
-      font-weight: 700;
-      color: #00ffff;
-      margin-bottom: 12px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      border-bottom: 1px solid rgba(100, 180, 255, 0.2);
-      padding-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    #controls-panel h3::before {
-      content: '\f044';
-      font-family: 'Font Awesome 6 Free';
-      font-weight: 900;
-      font-size: 14px;
     }
     
     .ctrl-grid {
@@ -268,13 +209,6 @@
       color: #ff6b6b;
       text-align: center;
       white-space: nowrap;
-      transition: all 0.2s ease;
-    }
-    
-    .ctrl-key:hover {
-      background: rgba(139, 0, 0, 0.25);
-      border-color: rgba(139, 0, 0, 0.5);
-      transform: translateY(-1px);
     }
     
     .ctrl-desc {
@@ -282,34 +216,12 @@
       color: #8aa8c8;
     }
     
-    /* Panel de ubicación */
     #room-panel {
       position: absolute;
       top: 20px;
       right: 20px;
       min-width: 200px;
       text-align: center;
-      background: linear-gradient(135deg, rgba(75, 0, 130, 0.15), rgba(10, 15, 26, 0.92));
-      border-color: rgba(75, 0, 130, 0.3);
-    }
-    
-    #room-panel h3 {
-      font-size: 11px;
-      font-weight: 600;
-      color: rgba(75, 0, 130, 0.8);
-      margin-bottom: 6px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    
-    #room-panel h3::before {
-      content: '\f015';
-      font-family: 'Font Awesome 6 Free';
-      font-weight: 900;
     }
     
     #room-name {
@@ -320,7 +232,6 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
       margin-bottom: 4px;
-      letter-spacing: 1px;
     }
     
     #room-info {
@@ -328,7 +239,6 @@
       color: #6a8ab0;
     }
     
-    /* Barra de estado */
     #status-bar {
       position: absolute;
       bottom: 20px;
@@ -356,75 +266,55 @@
       font-size: 13px;
     }
     
-    /* Mute indicator */
-    #mute-indicator {
-      cursor: pointer;
-      font-size: 18px;
-      margin-right: 8px;
-      transition: transform 0.2s ease;
-    }
-    
-    #mute-indicator:hover {
-      transform: scale(1.2);
-    }
-    
-    /* Weather indicator */
-    #weather-indicator {
-      margin-right: 8px;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    
     /* Crosshair */
     #crosshair {
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 8px;
-      height: 8px;
+      width: 20px;
+      height: 20px;
       pointer-events: none;
       z-index: 20;
       opacity: 0;
-      transition: opacity 0.15s, transform 0.1s ease;
-      background: radial-gradient(circle, rgba(0, 255, 255, 0.9) 0%, transparent 70%);
-      border-radius: 50%;
-      box-shadow: 
-        0 0 0 2px rgba(0, 255, 255, 0.3),
-        0 0 10px rgba(0, 255, 255, 0.5),
-        0 0 20px rgba(0, 255, 255, 0.3);
+      transition: opacity 0.15s;
     }
     
-    #crosshair.active {
+    #crosshair.visible {
       opacity: 1;
     }
     
-    #crosshair::before,
-    #crosshair::after {
-      content: '';
+    #crosshair .crosshair-line {
       position: absolute;
       background: rgba(0, 255, 255, 0.8);
-    }
-    
-    #crosshair::before {
-      width: 2px;
-      height: 16px;
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
     }
     
-    #crosshair::after {
-      width: 16px;
+    #crosshair .crosshair-line.horizontal {
+      width: 20px;
       height: 2px;
+    }
+    
+    #crosshair .crosshair-line.vertical {
+      width: 2px;
+      height: 20px;
+    }
+    
+    #crosshair .crosshair-dot {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: rgba(0, 255, 255, 0.9);
+      border-radius: 50%;
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
     }
     
-    /* Interaction hint */
+    /* Interaction Hint */
     #interaction-hint {
       position: fixed;
       bottom: 100px;
@@ -445,22 +335,10 @@
     
     #interaction-hint.visible {
       display: block;
-      animation: fadeIn 0.3s ease;
-    }
-    
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateX(-50%) translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-      }
     }
     
     /* Minimap */
-    .minimap {
+    .minimap-container {
       position: absolute;
       bottom: 20px;
       right: 20px;
@@ -474,178 +352,168 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
     
-    .minimap canvas {
+    .minimap-container canvas {
       width: 100%;
       height: 100%;
       display: block;
     }
     
-    /* ============================================
-       ESTILOS PARA LA INTRO (OPCIONAL - FALLBACK)
-       ============================================ */
-    
-    .intro-fallback {
+    /* Dialog System */
+    .dialog-container {
       position: fixed;
       inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #050008 0%, #0a0a1a 100%);
-      z-index: 999;
-      color: white;
-      text-align: center;
-    }
-    
-    .intro-fallback h1 {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 8rem;
-      font-weight: 400;
-      background: linear-gradient(135deg, #8b0000, #4b0082, #00ffff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 20px;
-      animation: glow 3s ease-in-out infinite;
-    }
-    
-    @keyframes glow {
-      0%, 100% { text-shadow: 0 0 20px rgba(0, 255, 255, 0.5); }
-      50% { text-shadow: 0 0 40px rgba(0, 255, 255, 0.8); }
-    }
-    
-    .intro-fallback p {
-      font-size: 1.5rem;
-      color: #00ffff;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      margin-bottom: 40px;
-    }
-    
-    .intro-fallback .loader {
-      width: 60px;
-      height: 60px;
-      border: 4px solid rgba(100, 180, 255, 0.1);
-      border-top-color: #00ffff;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    
-    /* ============================================
-       RESPONSIVE DESIGN
-       ============================================ */
-    
-    @media (max-width: 768px) {
-      #controls-panel {
-        width: 180px;
-        top: 12px;
-        left: 12px;
-      }
-      
-      #room-panel {
-        min-width: 160px;
-        top: 12px;
-        right: 12px;
-      }
-      
-      #status-bar {
-        bottom: 12px;
-        padding: 8px 16px;
-        gap: 16px;
-      }
-      
-      .minimap {
-        width: 140px;
-        height: 140px;
-        bottom: 12px;
-        right: 12px;
-      }
-      
-      .loading-logo {
-        width: 100px;
-        height: 100px;
-      }
-      
-      .loading-bar-container {
-        width: 200px;
-      }
-    }
-    
-    @media (max-width: 480px) {
-      #controls-panel {
-        display: none;
-      }
-      
-      #room-panel {
-        display: none;
-      }
-      
-      #status-bar {
-        display: none;
-      }
-      
-      .minimap {
-        display: none;
-      }
-    }
-    
-    /* ============================================
-       EFECTOS ESPECIALES
-       ============================================ */
-    
-    /* Cursor personalizado */
-    .custom-cursor {
-      position: fixed;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: rgba(0, 255, 255, 0.3);
-      border: 2px solid #00ffff;
+      display: none;
+      z-index: 1000;
       pointer-events: none;
-      z-index: 9999;
-      transition: transform 0.1s ease, opacity 0.1s ease;
-      transform: translate(-50%, -50%);
-    }
-    
-    .custom-cursor:hover {
-      background: rgba(0, 255, 255, 0.5);
-      transform: translate(-50%, -50%) scale(1.2);
-    }
-    
-    /* Tooltip */
-    .tooltip {
-      position: absolute;
-      background: rgba(10, 15, 26, 0.98);
-      border: 1px solid rgba(100, 180, 255, 0.3);
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 12px;
-      color: #d0e0f8;
-      pointer-events: none;
-      z-index: 20;
-      opacity: 0;
-      transition: opacity 0.2s ease;
+      background: rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(8px);
     }
     
-    .tooltip.visible {
+    .dialog-container.visible {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+    }
+    
+    .dialog-box {
+      background: rgba(10, 15, 26, 0.98);
+      border: 1px solid rgba(100, 180, 255, 0.3);
+      border-radius: 12px;
+      width: 400px;
+      max-width: 90%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(12px);
+      transform: scale(0.9);
+      opacity: 0;
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+    
+    .dialog-box.visible {
+      transform: scale(1);
       opacity: 1;
+    }
+    
+    .dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(100, 180, 255, 0.2);
+    }
+    
+    .dialog-title {
+      color: #00ffff;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    
+    .dialog-close {
+      background: none;
+      border: none;
+      color: #8aa8c8;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    
+    .dialog-close:hover {
+      color: #00ffff;
+    }
+    
+    .dialog-content {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+    }
+    
+    .dialog-avatar {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #8b0000, #4b0082);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #00ffff;
+    }
+    
+    .dialog-message {
+      flex: 1;
+      color: #d0e0f8;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    
+    /* Notification System */
+    .notification-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+    
+    .notification {
+      background: rgba(10, 15, 26, 0.98);
+      border: 1px solid rgba(100, 180, 255, 0.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: #d0e0f8;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(12px);
+      animation: slideIn 0.3s ease;
+    }
+    
+    .notification.hiding {
+      opacity: 0;
+      transform: translateX(100%);
+      transition: all 0.3s ease;
+    }
+    
+    .notification.success { border-color: rgba(0, 255, 0, 0.5); }
+    .notification.error { border-color: rgba(255, 0, 0, 0.5); }
+    .notification.warning { border-color: rgba(255, 255, 0, 0.5); }
+    .notification.info { border-color: rgba(0, 255, 255, 0.5); }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(100%); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      #controls-panel { display: none; }
+      #room-panel { display: none; }
+      #status-bar { display: none; }
+      .minimap-container { display: none; }
+      .dialog-box { width: 90%; }
     }
   </style>
 </head>
 <body>
   <!-- Loading Screen -->
-  <div id="loading-screen">
+  <div id="loading-screen" class="loading-screen">
     <div class="loading-content">
       <div class="loading-logo">
         <div class="loading-logo-icon">
-          <i class="fas fa-eye"></i>
+          <i class="fas fa-graduation-cap"></i>
         </div>
       </div>
       <div class="loading-bar-container">
         <div class="loading-bar" id="loading-bar"></div>
       </div>
-      <div id="loading-text">Cargando Templo Malevolo...</div>
+      <div id="loading-text">Cargando Campus SENA...</div>
+      <div class="loading-tips" id="loading-tips">Consejos: Usa WASD para moverte</div>
     </div>
   </div>
 
@@ -654,15 +522,8 @@
     <div id="intro-canvas"></div>
   </div>
 
-  <!-- Crosshair -->
-  <div id="crosshair"></div>
-  
-  <!-- Interaction Hint -->
-  <div id="interaction-hint">Presiona <strong>E</strong> para interactuar</div>
-
   <!-- UI Overlay -->
   <div id="ui-overlay">
-    <!-- Controls Panel -->
     <div id="controls-panel" class="panel">
       <h3>Controles</h3>
       <div class="ctrl-grid">
@@ -670,54 +531,84 @@
         <span class="ctrl-key">S</span><span class="ctrl-desc">Atrás</span>
         <span class="ctrl-key">A</span><span class="ctrl-desc">Izquierda</span>
         <span class="ctrl-key">D</span><span class="ctrl-desc">Derecha</span>
-        <span class="ctrl-key">Shift</span><span class="ctrl-desc">Correr</span>
-        <span class="ctrl-key">Espacio</span><span class="ctrl-desc">Saltar</span>
-        <span class="ctrl-key">C</span><span class="ctrl-desc">Agacharse</span>
         <span class="ctrl-key">E</span><span class="ctrl-desc">Interactuar</span>
-        <span class="ctrl-key">M</span><span class="ctrl-desc">Silenciar</span>
-        <span class="ctrl-key">N</span><span class="ctrl-desc">Clima</span>
-        <span class="ctrl-key">T</span><span class="ctrl-desc">Tour</span>
-        <span class="ctrl-key">Esc</span><span class="ctrl-desc">Soltar mouse</span>
+        <span class="ctrl-key">V</span><span class="ctrl-desc">VR</span>
+        <span class="ctrl-key">Esc</span><span class="ctrl-desc">Menú</span>
       </div>
     </div>
-
-    <!-- Room Panel -->
+    
     <div id="room-panel" class="panel">
       <h3>Ubicación</h3>
-      <div id="room-name">SENA Manizales</div>
-      <div id="room-info">Campus 3D - Templo Malevolo</div>
+      <div id="room-name">Campus SENA</div>
+      <div id="room-info">Manizales - Colombia</div>
     </div>
-
-    <!-- Status Bar -->
+    
     <div id="status-bar" class="panel">
-      <span id="mute-indicator" style="cursor:pointer;font-size:18px;margin-right:8px;">🔊</span>
-      <span id="weather-indicator" style="margin-right:8px;font-size:12px;color:#88ff99;">☀️ Despejado</span>
+      <span id="mute-indicator">🔊</span>
+      <span id="weather-indicator">☀️</span>
       <span id="coords">X: 0 · Z: 0 · Y: 0</span>
       <span class="fps" id="fps">FPS: --</span>
     </div>
+    
+    <div id="interaction-hint">Presiona <strong>E</strong> para interactuar</div>
+  </div>
+
+  <!-- Crosshair -->
+  <div id="crosshair">
+    <div class="crosshair-line horizontal"></div>
+    <div class="crosshair-line vertical"></div>
+    <div class="crosshair-dot"></div>
   </div>
 
   <!-- Minimap -->
-  <div class="minimap">
+  <div class="minimap-container">
     <canvas id="minimap"></canvas>
   </div>
+
+  <!-- Dialog Container -->
+  <div id="dialog-container" class="dialog-container">
+    <div class="dialog-box">
+      <div class="dialog-header">
+        <span class="dialog-title" id="dialog-title">NPC</span>
+        <button class="dialog-close" id="dialog-close">&times;</button>
+      </div>
+      <div class="dialog-content">
+        <div class="dialog-avatar" id="dialog-avatar">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="dialog-message" id="dialog-message">
+          Hola, ¿en qué puedo ayudarte?
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Container -->
+  <div id="notification-container" class="notification-container"></div>
 
   <!-- App Container -->
   <div id="app"></div>
 
   <!-- Scripts -->
   <script type="module">
-    // Actualizar barra de carga
+    // Simular carga
     const loadingBar = document.getElementById('loading-bar');
+    const loadingText = document.getElementById('loading-text');
+    const tips = ['Usa WASD para moverte', 'Mouse para mirar', 'E para interactuar', 'V para VR'];
     let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 5;
+    let tipIndex = 0;
+    
+    const loadingInterval = setInterval(() => {
+      progress += Math.random() * 8;
       if (progress >= 100) {
         progress = 100;
-        clearInterval(interval);
+        clearInterval(loadingInterval);
       }
       loadingBar.style.width = `${progress}%`;
-    }, 100);
+      
+      tipIndex = (tipIndex + 1) % tips.length;
+      loadingText.textContent = `Cargando... ${tips[tipIndex]}`;
+    }, 150);
   </script>
   
   <script type="module" src="/src/main.js"></script>

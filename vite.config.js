@@ -3,11 +3,10 @@ import { resolve } from 'path';
 
 export default defineConfig({
   root: '.',
-  publicDir: '.',
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
-      '@assets': resolve(__dirname, './public')
+      'three': resolve(__dirname, './node_modules/three')
     }
   },
   build: {
@@ -18,11 +17,9 @@ export default defineConfig({
         manualChunks: {
           three: ['three'],
           gsap: ['gsap']
-        },
-        assetFileNames: 'assets/[name]-[hash][extname]'
+        }
       }
-    },
-    chunkSizeWarningLimit: 1000
+    }
   },
   server: {
     port: 5173,
