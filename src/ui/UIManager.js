@@ -169,9 +169,12 @@ export class UIManager {
         this.panels.dialog = dialogContainer;
         
         // Evento para cerrar diálogo
-        document.getElementById('dialog-close').addEventListener('click', () => {
-            this.hideDialog();
-        });
+        const closeButton = dialogContainer.querySelector('.dialog-close');
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
+                this.hideDialog();
+            });
+        }
     }
     
     // Crear sistema de notificaciones
@@ -244,36 +247,57 @@ export class UIManager {
         this.panels.settings = settingsPanel;
         
         // Eventos
-        document.getElementById('settings-close').addEventListener('click', () => {
-            this.toggleSettings();
-        });
+        const settingsClose = settingsPanel.querySelector('.settings-close');
+        if (settingsClose) {
+            settingsClose.addEventListener('click', () => {
+                this.toggleSettings();
+            });
+        }
         
-        document.getElementById('settings-save').addEventListener('click', () => {
-            this.saveSettings();
-            this.toggleSettings();
-        });
+        const settingsSave = settingsPanel.querySelector('.settings-save');
+        if (settingsSave) {
+            settingsSave.addEventListener('click', () => {
+                this.saveSettings();
+                this.toggleSettings();
+            });
+        }
         
         // Eventos de los controles
-        document.getElementById('volume-slider').addEventListener('input', (e) => {
-            const volume = parseFloat(e.target.value);
-            this.settings.volume = volume;
-            document.getElementById('volume-value').textContent = `${Math.round(volume * 100)}%`;
-        });
+        const volumeSlider = settingsPanel.querySelector('#volume-slider');
+        if (volumeSlider) {
+            volumeSlider.addEventListener('input', (e) => {
+                const volume = parseFloat(e.target.value);
+                this.settings.volume = volume;
+                const volumeValue = settingsPanel.querySelector('#volume-value');
+                if (volumeValue) {
+                    volumeValue.textContent = `${Math.round(volume * 100)}%`;
+                }
+            });
+        }
         
-        document.getElementById('crosshair-toggle').addEventListener('change', (e) => {
-            this.settings.showCrosshair = e.target.checked;
-            this.updateCrosshair();
-        });
+        const crosshairToggle = settingsPanel.querySelector('#crosshair-toggle');
+        if (crosshairToggle) {
+            crosshairToggle.addEventListener('change', (e) => {
+                this.settings.showCrosshair = e.target.checked;
+                this.updateCrosshair();
+            });
+        }
         
-        document.getElementById('minimap-toggle').addEventListener('change', (e) => {
-            this.settings.showMinimap = e.target.checked;
-            this.updateMinimap();
-        });
+        const minimapToggle = settingsPanel.querySelector('#minimap-toggle');
+        if (minimapToggle) {
+            minimapToggle.addEventListener('change', (e) => {
+                this.settings.showMinimap = e.target.checked;
+                this.updateMinimap();
+            });
+        }
         
-        document.getElementById('controls-toggle').addEventListener('change', (e) => {
-            this.settings.showControls = e.target.checked;
-            this.updateControls();
-        });
+        const controlsToggle = settingsPanel.querySelector('#controls-toggle');
+        if (controlsToggle) {
+            controlsToggle.addEventListener('change', (e) => {
+                this.settings.showControls = e.target.checked;
+                this.updateControls();
+            });
+        }
     }
     
     // Crear panel de VR
@@ -310,13 +334,19 @@ export class UIManager {
         this.panels.vr = vrPanel;
         
         // Eventos
-        document.getElementById('vr-close').addEventListener('click', () => {
-            this.toggleVRPanel();
-        });
+        const vrClose = vrPanel.querySelector('.vr-close');
+        if (vrClose) {
+            vrClose.addEventListener('click', () => {
+                this.toggleVRPanel();
+            });
+        }
         
-        document.getElementById('vr-start').addEventListener('click', () => {
-            this.startVR();
-        });
+        const vrStart = vrPanel.querySelector('.vr-start');
+        if (vrStart) {
+            vrStart.addEventListener('click', () => {
+                this.startVR();
+            });
+        }
     }
     
     // Configurar eventos
@@ -380,12 +410,10 @@ export class UIManager {
         // Tecla ESC para abrir/cerrar menú
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Escape') {
-                if (this.panels.settings.style.display === 'block') {
+                if (this.panels.settings && this.panels.settings.style.display === 'block') {
                     this.toggleSettings();
-                } else if (this.panels.dialog.style.display === 'block') {
+                } else if (this.panels.dialog && this.panels.dialog.style.display === 'block') {
                     this.hideDialog();
-                } else {
-                    this.toggleSettings();
                 }
             }
             
@@ -402,30 +430,37 @@ export class UIManager {
         if (!dialog) return;
         
         // Configurar el diálogo
-        const title = document.getElementById('dialog-title');
-        const avatar = document.getElementById('dialog-avatar');
-        const messageEl = document.getElementById('dialog-message');
+        const title = dialog.querySelector('.dialog-title');
+        const avatar = dialog.querySelector('.dialog-avatar');
+        const messageEl = dialog.querySelector('.dialog-message');
         
         if (npc) {
             title.textContent = npc.options.type === 'teacher' ? 'Profesor' : 
                                npc.options.type === 'student' ? 'Estudiante' : 'Personal';
             
             // Icono según el tipo
-            avatar.innerHTML = npc.options.type === 'teacher' ? 
-                '<i class="fas fa-chalkboard-teacher"></i>' :
-                npc.options.type === 'student' ? 
-                '<i class="fas fa-user-graduate"></i>' :
-                '<i class="fas fa-user-tie"></i>';
+            if (avatar) {
+                avatar.innerHTML = npc.options.type === 'teacher' ? 
+                    '<i class="fas fa-chalkboard-teacher"></i>' :
+                    npc.options.type === 'student' ? 
+                    '<i class="fas fa-user-graduate"></i>' :
+                    '<i class="fas fa-user-tie"></i>';
+            }
         }
         
-        messageEl.textContent = message;
+        if (messageEl) {
+            messageEl.textContent = message;
+        }
         
         // Mostrar el diálogo
         dialog.style.display = 'block';
         
         // Enfocar el diálogo
         setTimeout(() => {
-            dialog.querySelector('.dialog-box').classList.add('visible');
+            const dialogBox = dialog.querySelector('.dialog-box');
+            if (dialogBox) {
+                dialogBox.classList.add('visible');
+            }
         }, 10);
     }
     
@@ -434,7 +469,10 @@ export class UIManager {
         const dialog = this.panels.dialog;
         if (!dialog) return;
         
-        dialog.querySelector('.dialog-box').classList.remove('visible');
+        const dialogBox = dialog.querySelector('.dialog-box');
+        if (dialogBox) {
+            dialogBox.classList.remove('visible');
+        }
         
         setTimeout(() => {
             dialog.style.display = 'none';

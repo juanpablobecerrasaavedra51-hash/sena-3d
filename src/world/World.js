@@ -3,6 +3,7 @@
  * Integra edificios, NPCs, efectos y entorno
  */
 
+// Importar Three.js desde CDN
 import * as THREE from 'three';
 import { Building } from './Building.js';
 import { NPC } from '../npcs/NPC.js';
@@ -152,6 +153,7 @@ export class World {
         });
         
         const sky = new THREE.Mesh(skyGeometry, skyMaterial);
+        sky.name = 'sky';
         this.scene.add(sky);
         
         // Sol
@@ -396,7 +398,7 @@ export class World {
         
         // Lente
         const lensGeometry = new THREE.SphereGeometry(0.05, 16, 16);
-        const lensMaterial = new THREE.MeshStandardMaterial({
+        const lensMaterial = new THREE.MeshBasicMaterial({
             color: 0x8888ff,
             transparent: true,
             opacity: 0.7

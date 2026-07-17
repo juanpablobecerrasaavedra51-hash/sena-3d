@@ -3,6 +3,7 @@
  * Crea pasillos, salones, baños, etc. con arquitectura detallada
  */
 
+// Importar Three.js desde CDN
 import * as THREE from 'three';
 
 export class Building {
@@ -361,6 +362,7 @@ export class Building {
             screen: true
         };
         group.add(screen);
+        this.interactiveObjects.push(screen);
         
         // Soporte del televisor
         const standGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);

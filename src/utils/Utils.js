@@ -3,8 +3,6 @@
  * Funciones matemáticas, de conversión y helpers
  */
 
-import * as THREE from 'three';
-
 export class Utils {
     // Clamp un valor entre min y max
     static clamp(value, min, max) {
@@ -39,16 +37,6 @@ export class Utils {
     // Generar un color aleatorio en formato hex
     static randomHexColor() {
         return `#${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')}`;
-    }
-    
-    // Convertir color hex a THREE.Color
-    static hexToColor(hex) {
-        return new THREE.Color(hex);
-    }
-    
-    // Convertir RGB a hex
-    static rgbToHex(r, g, b) {
-        return ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
     }
     
     // Formatear número
@@ -149,187 +137,6 @@ export class Utils {
         }
     }
     
-    // Generar ruido Perlin simple (simplificado)
-    static noise2D(x, y) {
-        const n = x + y * 57;
-        let result = (n << 13) ^ n;
-        return (1.0 - ((result * (result * result * 15731 + 789221) + 1376312589) & 0x7fffffff) / 1073741824.0);
-    }
-    
-    // Generar ruido Perlin suave
-    static smoothNoise2D(x, y) {
-        const corners = (this.noise2D(x - 1, y - 1) + this.noise2D(x + 1, y - 1) + 
-                        this.noise2D(x - 1, y + 1) + this.noise2D(x + 1, y + 1)) / 16;
-        const sides = (this.noise2D(x - 1, y) + this.noise2D(x + 1, y) + 
-                       this.noise2D(x, y - 1) + this.noise2D(x, y + 1)) / 8;
-        const center = this.noise2D(x, y) / 4;
-        
-        return corners + sides + center;
-    }
-    
-    // Interpolación de ruido
-    static interpolatedNoise2D(x, y) {
-        const integerX = Math.floor(x);
-        const fractionalX = x - integerX;
-        
-        const integerY = Math.floor(y);
-        const fractionalY = y - integerY;
-        
-        const v1 = this.smoothNoise2D(integerX, integerY);
-        const v2 = this.smoothNoise2D(integerX + 1, integerY);
-        const v3 = this.smoothNoise2D(integerX, integerY + 1);
-        const v4 = this.smoothNoise2D(integerX + 1, integerY + 1);
-        
-        const i1 = this.lerp(v1, v2, fractionalX);
-        const i2 = this.lerp(v3, v4, fractionalX);
-        
-        return this.lerp(i1, i2, fractionalY);
-    }
-    
-    // Generar terreno con ruido Perlin
-    static generateTerrain(width, height, scale = 0.1) {
-        const terrain = [];
-        
-        for (let x = 0; x < width; x++) {
-            terrain[x] = [];
-            for (let y = 0; y < height; y++) {
-                terrain[x][y] = this.interpolatedNoise2D(x * scale, y * scale);
-            }
-        }
-        
-        return terrain;
-    }
-    
-    // Cargar textura
-    static loadTexture(path) {
-        return new Promise((resolve, reject) => {
-            const texture = new THREE.TextureLoader().load(
-                path,
-                resolve,
-                undefined,
-                reject
-            );
-        });
-    }
-    
-    // Cargar modelo GLTF
-    static loadGLTF(path, dracoPath = null) {
-        return new Promise((resolve, reject) => {
-            const loader = new THREE.GLTFLoader();
-            
-            if (dracoPath) {
-                const dracoLoader = new THREE.DRACOLoader();
-                dracoLoader.setDecoderPath(dracoPath);
-                loader.setDRACOLoader(dracoLoader);
-            }
-            
-            loader.load(
-                path,
-                resolve,
-                undefined,
-                reject
-            );
-        });
-    }
-    
-    // Cargar sonido
-    static loadAudio(path) {
-        return new Promise((resolve, reject) => {
-            const audio = new Audio(path);
-            audio.addEventListener('canplay', () => resolve(audio));
-            audio.addEventListener('error', reject);
-            audio.load();
-        });
-    }
-    
-    // Reproducir sonido
-    static playSound(audio, volume = 1, loop = false) {
-        audio.volume = volume;
-        audio.loop = loop;
-        audio.currentTime = 0;
-        audio.play().catch(e => console.error('Error al reproducir sonido:', e));
-    }
-    
-    // Detener sonido
-    static stopSound(audio) {
-        audio.pause();
-        audio.currentTime = 0;
-    }
-    
-    // Formatear bytes
-    static formatBytes(bytes) {
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
-        if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-        return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-    }
-    
-    // Formatear fecha
-    static formatDate(date) {
-        return new Intl.DateTimeFormat('es-ES', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        }).format(date);
-    }
-    
-    // Generar nombre aleatorio
-    static randomName(type = 'student') {
-        const firstNames = {
-            male: ['Juan', 'Carlos', 'Luis', 'Pedro', 'Miguel', 'Alejandro', 'Jorge', 'Daniel'],
-            female: ['María', 'Ana', 'Laura', 'Sofía', 'Lucía', 'Valentina', 'Camila', 'Isabella']
-        };
-        
-        const lastNames = ['Pérez', 'Gómez', 'Rodríguez', 'López', 'Martínez', 'Sánchez', 'Díaz', 'Hernández'];
-        
-        const gender = Math.random() > 0.5 ? 'male' : 'female';
-        const firstName = firstNames[gender][Math.floor(Math.random() * firstNames[gender].length)];
-        const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-        
-        return `${firstName} ${lastName}`;
-    }
-    
-    // Generar mensaje aleatorio para NPC
-    static randomNPCMessage(type) {
-        const messages = {
-            student: [
-                "¡Hola! ¿Sabes dónde es el salón 101?",
-                "Estoy estudiando para el examen de Three.js",
-                "¿Has visto mi cuaderno?",
-                "El profesor explicó algo interesante hoy",
-                "¿Me puedes ayudar con este ejercicio?",
-                "Estoy buscando a mi compañero de proyecto",
-                "¿Sabes a qué hora es el descanso?",
-                "El campus es muy grande, ¿verdad?"
-            ],
-            teacher: [
-                "Bienvenido al campus SENA. ¿En qué puedo ayudarte?",
-                "Recuerda: la práctica hace al maestro",
-                "¿Tienes alguna pregunta sobre la clase?",
-                "El conocimiento es poder",
-                "No olvides entregar la tarea a tiempo",
-                "¿Has entendido el tema de hoy?",
-                "La tecnología avanza rápido, mantente actualizado",
-                "El trabajo en equipo es fundamental"
-            ],
-            staff: [
-                "¿Necesitas ayuda para encontrar algo?",
-                "El campus está limpio gracias a nuestro trabajo",
-                "¿Buscas a alguien en particular?",
-                "Mantengamos el orden en el campus",
-                "¿Sabes dónde está la oficina de admisiones?",
-                "El horario de atención es de 8am a 5pm",
-                "¿Necesitas información sobre algún trámite?",
-                "El campus tiene más de 10 edificios"
-            ]
-        };
-        
-        return messages[type][Math.floor(Math.random() * messages[type].length)];
-    }
-    
     // Verificar si el dispositivo es móvil
     static isMobile() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -418,6 +225,60 @@ export class Utils {
             console.error('Error al limpiar localStorage:', e);
             return false;
         }
+    }
+    
+    // Generar nombre aleatorio
+    static randomName(type = 'student') {
+        const firstNames = {
+            male: ['Juan', 'Carlos', 'Luis', 'Pedro', 'Miguel', 'Alejandro', 'Jorge', 'Daniel'],
+            female: ['María', 'Ana', 'Laura', 'Sofía', 'Lucía', 'Valentina', 'Camila', 'Isabella']
+        };
+        
+        const lastNames = ['Pérez', 'Gómez', 'Rodríguez', 'López', 'Martínez', 'Sánchez', 'Díaz', 'Hernández'];
+        
+        const gender = Math.random() > 0.5 ? 'male' : 'female';
+        const firstName = firstNames[gender][Math.floor(Math.random() * firstNames[gender].length)];
+        const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+        
+        return `${firstName} ${lastName}`;
+    }
+    
+    // Generar mensaje aleatorio para NPC
+    static randomNPCMessage(type) {
+        const messages = {
+            student: [
+                "¡Hola! ¿Sabes dónde es el salón 101?",
+                "Estoy estudiando para el examen de Three.js",
+                "¿Has visto mi cuaderno?",
+                "El profesor explicó algo interesante hoy",
+                "¿Me puedes ayudar con este ejercicio?",
+                "Estoy buscando a mi compañero de proyecto",
+                "¿Sabes a qué hora es el descanso?",
+                "El campus es muy grande, ¿verdad?"
+            ],
+            teacher: [
+                "Bienvenido al campus SENA. ¿En qué puedo ayudarte?",
+                "Recuerda: la práctica hace al maestro",
+                "¿Tienes alguna pregunta sobre la clase?",
+                "El conocimiento es poder",
+                "No olvides entregar la tarea a tiempo",
+                "¿Has entendido el tema de hoy?",
+                "La tecnología avanza rápido, mantente actualizado",
+                "El trabajo en equipo es fundamental"
+            ],
+            staff: [
+                "¿Necesitas ayuda para encontrar algo?",
+                "El campus está limpio gracias a nuestro trabajo",
+                "¿Buscas a alguien en particular?",
+                "Mantengamos el orden en el campus",
+                "¿Sabes dónde está la oficina de admisiones?",
+                "El horario de atención es de 8am a 5pm",
+                "¿Necesitas información sobre algún trámite?",
+                "El campus tiene más de 10 edificios"
+            ]
+        };
+        
+        return messages[type][Math.floor(Math.random() * messages[type].length)];
     }
 }
 

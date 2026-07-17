@@ -3,6 +3,7 @@
  * NPCs con animaciones, interacciones y vestuario
  */
 
+// Importar Three.js desde CDN
 import * as THREE from 'three';
 
 export class NPC {

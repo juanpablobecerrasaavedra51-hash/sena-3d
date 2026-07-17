@@ -1,19 +1,12 @@
 /**
  * SENA 3D EXPERIENCE - VERSIÓN COMPLETA
- * Experiencia inmersiva con:
- * - Campus 3D detallado (pasillos, salones, baños, etc.)
- * - NPCs interactivos con vestuario
- * - Soporte VR (WebXR)
- * - Efectos realistas (clima, iluminación dinámica)
- * - UI moderna y responsive
+ * Experiencia inmersiva con campus 3D, NPCs, VR y efectos realistas
  */
 
+// Importar desde node_modules
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
 // Importar nuestros módulos
 import { JujutsuIntro } from './intro.js';
@@ -36,7 +29,6 @@ class SENA3DApp {
         this.container = document.getElementById('app');
         this.loadingScreen = document.getElementById('loading-screen');
         this.introContainer = document.getElementById('intro-canvas');
-        this.uiContainer = document.getElementById('ui-overlay');
         
         // Componentes principales
         this.scene = null;
@@ -64,6 +56,7 @@ class SENA3DApp {
         // Raycaster para interacciones
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
+        this.interactiveObjects = [];
         
         // Inicializar
         this.init();
@@ -80,8 +73,11 @@ class SENA3DApp {
         // Inicializar gestores
         this.uiManager = new UIManager(document.body);
         
-        // Iniciar la intro después de cargar los recursos básicos
-        this.startIntro();
+        // Ocultar loading screen después de un tiempo
+        setTimeout(() => {
+            this.uiManager.hideLoadingScreen();
+            this.startIntro();
+        }, 2000);
     }
     
     setupRenderer() {
@@ -97,7 +93,6 @@ class SENA3DApp {
         this.renderer.toneMappingExposure = 1.0;
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        this.renderer.shadowMap.softShadows = true;
         
         // Configurar XR
         this.renderer.xr.enabled = true;
@@ -185,6 +180,13 @@ class SENA3DApp {
         window.addEventListener('start-vr', () => {
             this.toggleVR();
         });
+        
+        // Evento para NPC dialog
+        window.addEventListener('npc-dialog', (e) => {
+            if (this.uiManager) {
+                this.uiManager.showDialog(e.detail.npc, e.detail.message);
+            }
+        });
     }
     
     startIntro() {
@@ -192,7 +194,6 @@ class SENA3DApp {
         
         // Mostrar la intro
         this.introContainer.style.display = 'block';
-        this.uiManager.hideLoadingScreen();
         
         // Crear la intro épica
         this.intro = new JujutsuIntro(this.introContainer);
@@ -226,7 +227,9 @@ class SENA3DApp {
         }
         
         // Mostrar UI
-        this.uiManager.panels.uiOverlay.classList.add('visible');
+        if (this.uiManager && this.uiManager.panels.uiOverlay) {
+            this.uiManager.panels.uiOverlay.classList.add('visible');
+        }
         
         // Activar controles
         this.controls.enabled = true;
@@ -244,31 +247,29 @@ class SENA3DApp {
             for (let i = 0; i < interactiveObjects.length; i++) {
                 this.vrManager.registerInteractiveObject(interactiveObjects[i]);
             }
+            this.interactiveObjects = interactiveObjects;
         }
         
         // Iniciar el loop de animación
         this.animate();
         
         // Actualizar UI
-        this.uiManager.updateLocation('Campus SENA', 'Manizales - Colombia');
-        this.uiManager.updateObjective('Explora el campus y descubre todos los secretos');
-        
-        // Mostrar mensaje de bienvenida
-        setTimeout(() => {
-            this.uiManager.showNotification(
-                '¡Bienvenido al Campus SENA 3D! Usa WASD para moverte y E para interactuar',
-                'info'
-            );
-        }, 1000);
+        if (this.uiManager) {
+            this.uiManager.updateLocation('Campus SENA', 'Manizales - Colombia');
+            this.uiManager.updateObjective('Explora el campus y descubre todos los secretos');
+            
+            setTimeout(() => {
+                this.uiManager.showNotification(
+                    '¡Bienvenido al Campus SENA 3D! Usa WASD para moverte y E para interactuar',
+                    'info'
+                );
+            }, 1000);
+        }
     }
     
     createWorld() {
         // Crear el mundo con todos los elementos
         this.world = new World(this.scene, this.camera);
-        
-        // Añadir objetos interactivos al raycaster
-        const interactiveObjects = this.world.getInteractiveObjects();
-        this.interactiveObjects = interactiveObjects;
     }
     
     toggleVR() {
@@ -372,10 +373,13 @@ class SENA3DApp {
         this.controls.enabled = !locked;
         this.pointerControls.enabled = locked;
         
-        if (locked) {
-            this.uiManager.panels.crosshair.classList.add('visible');
-        } else {
-            this.uiManager.panels.crosshair.classList.remove('visible');
+        const crosshair = document.getElementById('crosshair');
+        if (crosshair) {
+            if (locked) {
+                crosshair.classList.add('visible');
+            } else {
+                crosshair.classList.remove('visible');
+            }
         }
     }
     
@@ -396,36 +400,17 @@ class SENA3DApp {
         this.raycaster.setFromCamera(this.mouse, this.camera);
         
         // Verificar intersecciones con objetos interactivos
-        const intersects = this.raycaster.intersectObjects(this.interactiveObjects);
-        
-        if (intersects.length > 0) {
-            const object = intersects[0].object;
-            this.uiManager.showInteractionHint(true);
+        if (this.interactiveObjects && this.interactiveObjects.length > 0) {
+            const intersects = this.raycaster.intersectObjects(this.interactiveObjects);
             
-            // Resaltar objeto
-            if (object.userData.originalMaterial) {
-                object.material = object.userData.originalMaterial;
+            const hint = document.getElementById('interaction-hint');
+            if (hint) {
+                if (intersects.length > 0) {
+                    hint.classList.add('visible');
+                } else {
+                    hint.classList.remove('visible');
+                }
             }
-            object.userData.originalMaterial = object.material;
-            
-            const highlightMaterial = new THREE.MeshStandardMaterial({
-                color: 0xffff00,
-                emissive: 0xffff00,
-                emissiveIntensity: 0.5
-            });
-            
-            // Copiar propiedades del material original
-            if (object.material.map) {
-                highlightMaterial.map = object.material.map;
-            }
-            if (object.material.transparent) {
-                highlightMaterial.transparent = true;
-                highlightMaterial.opacity = object.material.opacity;
-            }
-            
-            object.material = highlightMaterial;
-        } else {
-            this.uiManager.showInteractionHint(false);
         }
     }
     
@@ -436,22 +421,27 @@ class SENA3DApp {
         this.raycaster.setFromCamera({ x: 0, y: 0 }, this.camera);
         
         // Verificar intersecciones con objetos interactivos
-        const intersects = this.raycaster.intersectObjects(this.interactiveObjects);
-        
-        if (intersects.length > 0) {
-            const object = intersects[0].object;
-            this.handleInteraction(object);
+        if (this.interactiveObjects && this.interactiveObjects.length > 0) {
+            const intersects = this.raycaster.intersectObjects(this.interactiveObjects);
+            
+            if (intersects.length > 0) {
+                const object = intersects[0].object;
+                this.handleInteraction(object);
+            }
         }
     }
     
     handleInteraction(object) {
         console.log('Interactuando con:', object.userData);
         
+        if (!object.userData) return;
+        
         switch (object.userData.type) {
             case 'door':
                 this.openDoor(object);
                 break;
             case 'tv':
+            case 'computer-screen':
                 this.toggleTV(object);
                 break;
             case 'whiteboard':
@@ -459,9 +449,6 @@ class SENA3DApp {
                 break;
             case 'npc':
                 this.interactWithNPC(object);
-                break;
-            case 'computer-screen':
-                this.interactWithComputer(object);
                 break;
             case 'elevator-button':
                 this.pressElevatorButton(object);
@@ -493,15 +480,27 @@ class SENA3DApp {
         };
         animate();
         
-        // Mostrar notificación
-        this.uiManager.showNotification(`Puerta abierta: ${door.userData.room}`, 'success');
+        if (this.uiManager) {
+            this.uiManager.showNotification(`Puerta abierta: ${door.userData.room || 'Salón'}`, 'success');
+        }
     }
     
     toggleTV(tv) {
         console.log('Alternando TV');
         
-        // Cambiar el material de la pantalla
-        const screen = tv.parent.children.find(c => c.userData.screen);
+        // Buscar la pantalla
+        let screen = null;
+        if (tv.userData.screen) {
+            screen = tv;
+        } else {
+            // Buscar en los hijos
+            for (let i = 0; i < tv.parent.children.length; i++) {
+                if (tv.parent.children[i].userData.screen) {
+                    screen = tv.parent.children[i];
+                    break;
+                }
+            }
+        }
         
         if (screen) {
             if (screen.material.color.getHex() === 0x000000) {
@@ -509,13 +508,13 @@ class SENA3DApp {
                 screen.material.color.setHex(0x0066cc);
                 screen.material.emissive = new THREE.Color(0x0066cc);
                 screen.material.emissiveIntensity = 0.5;
-                this.uiManager.showNotification('TV encendida', 'success');
+                if (this.uiManager) this.uiManager.showNotification('TV encendida', 'success');
             } else {
                 // Apagar TV
                 screen.material.color.setHex(0x000000);
                 screen.material.emissive = new THREE.Color(0x000000);
                 screen.material.emissiveIntensity = 0;
-                this.uiManager.showNotification('TV apagada', 'info');
+                if (this.uiManager) this.uiManager.showNotification('TV apagada', 'info');
             }
         }
     }
@@ -523,7 +522,6 @@ class SENA3DApp {
     interactWithWhiteboard(whiteboard) {
         console.log('Interactuando con pizarra');
         
-        // Cambiar el color de la pizarra temporalmente
         const originalColor = whiteboard.material.color.clone();
         whiteboard.material.color.setHex(0xffff00);
         
@@ -531,7 +529,9 @@ class SENA3DApp {
             whiteboard.material.color.copy(originalColor);
         }, 1000);
         
-        this.uiManager.showNotification('Escribiendo en la pizarra...', 'info');
+        if (this.uiManager) {
+            this.uiManager.showNotification('Escribiendo en la pizarra...', 'info');
+        }
     }
     
     interactWithNPC(npcObject) {
@@ -543,28 +543,9 @@ class SENA3DApp {
         }
     }
     
-    interactWithComputer(computer) {
-        console.log('Interactuando con computadora');
-        
-        // Cambiar el color de la pantalla
-        const originalColor = computer.material.color.clone();
-        computer.material.color.setHex(0x00ff00);
-        computer.material.emissive = new THREE.Color(0x00ff00);
-        computer.material.emissiveIntensity = 0.5;
-        
-        setTimeout(() => {
-            computer.material.color.copy(originalColor);
-            computer.material.emissive = new THREE.Color(0x000000);
-            computer.material.emissiveIntensity = 0;
-        }, 1000);
-        
-        this.uiManager.showNotification('Computadora encendida', 'success');
-    }
-    
     pressElevatorButton(button) {
         console.log('Presionando botón de ascensor:', button.userData.floor);
         
-        // Animación del botón
         const originalScale = button.scale.clone();
         button.scale.multiplyScalar(0.9);
         
@@ -572,25 +553,29 @@ class SENA3DApp {
             button.scale.copy(originalScale);
         }, 200);
         
-        this.uiManager.showNotification(
-            `Llamando ascensor al piso ${button.userData.floor}`,
-            'info'
-        );
+        if (this.uiManager) {
+            this.uiManager.showNotification(
+                `Llamando ascensor al piso ${button.userData.floor || 1}`,
+                'info'
+            );
+        }
     }
     
     useFireExtinguisher(extinguisher) {
         console.log('Usando extintor');
-        
-        this.uiManager.showNotification('Extintor listo para usar', 'success');
+        if (this.uiManager) {
+            this.uiManager.showNotification('Extintor listo para usar', 'success');
+        }
     }
     
     readInfoSign(sign) {
         console.log('Leyendo cartel:', sign.userData.message);
-        
-        this.uiManager.showNotification(
-            `Información: ${sign.userData.message}`,
-            'info'
-        );
+        if (this.uiManager) {
+            this.uiManager.showNotification(
+                `Información: ${sign.userData.message || 'Cartel informativo'}`,
+                'info'
+            );
+        }
     }
     
     toggleMute() {
@@ -598,10 +583,10 @@ class SENA3DApp {
         if (muteIndicator) {
             if (muteIndicator.textContent === '🔊') {
                 muteIndicator.textContent = '🔇';
-                this.uiManager.showNotification('Sonido desactivado', 'info');
+                if (this.uiManager) this.uiManager.showNotification('Sonido desactivado', 'info');
             } else {
                 muteIndicator.textContent = '🔊';
-                this.uiManager.showNotification('Sonido activado', 'info');
+                if (this.uiManager) this.uiManager.showNotification('Sonido activado', 'info');
             }
         }
     }
@@ -623,26 +608,28 @@ class SENA3DApp {
             storm: 'Tormenta'
         };
         
-        this.uiManager.showNotification(
-            `Clima cambiado a: ${weatherNames[nextWeather]}`,
-            'info'
-        );
+        if (this.uiManager) {
+            this.uiManager.showNotification(
+                `Clima cambiado a: ${weatherNames[nextWeather]}`,
+                'info'
+            );
+        }
     }
     
     startTour() {
         console.log('Iniciando tour...');
         
-        this.uiManager.showNotification(
-            'Tour automático iniciado. Sigue las instrucciones.',
-            'success'
-        );
+        if (this.uiManager) {
+            this.uiManager.showNotification(
+                'Tour automático iniciado. Sigue las instrucciones.',
+                'success'
+            );
+        }
         
-        // Implementar tour automático
         this.startAutomaticTour();
     }
     
     startAutomaticTour() {
-        // Posiciones del tour
         const tourPositions = [
             { x: 0, y: 2, z: 5, lookAt: { x: 0, y: 2, z: 0 } },
             { x: 0, y: 2, z: 25, lookAt: { x: 0, y: 2, z: 0 } },
@@ -659,23 +646,22 @@ class SENA3DApp {
         
         const moveToPosition = () => {
             if (currentPosition >= tourPositions.length) {
-                this.uiManager.showNotification('Tour completado', 'success');
+                if (this.uiManager) {
+                    this.uiManager.showNotification('Tour completado', 'success');
+                }
                 return;
             }
             
             const target = tourPositions[currentPosition];
             
-            // Mover cámara
             this.camera.position.set(target.x, target.y, target.z);
             this.camera.lookAt(
                 new THREE.Vector3(target.lookAt.x, target.lookAt.y, target.lookAt.z)
             );
             
-            // Actualizar controles
             this.controls.target.copy(new THREE.Vector3(target.lookAt.x, target.lookAt.y, target.lookAt.z));
             this.controls.update();
             
-            // Mostrar información
             const messages = [
                 'Bienvenido al Campus SENA Manizales',
                 'Este es el pasillo principal',
@@ -688,11 +674,11 @@ class SENA3DApp {
                 'Tour completado. ¡Explora por tu cuenta!'
             ];
             
-            this.uiManager.updateObjective(messages[currentPosition]);
+            if (this.uiManager) {
+                this.uiManager.updateObjective(messages[currentPosition]);
+            }
             
             currentPosition++;
-            
-            // Siguiente posición después de 3 segundos
             setTimeout(moveToPosition, 3000);
         };
         
@@ -706,13 +692,11 @@ class SENA3DApp {
         const delta = (time - this.prevTime) / 1000;
         
         if (this.state === AppState.INTRO) {
-            // Animar la intro
             if (this.intro) {
                 this.intro.update();
                 this.intro.render();
             }
         } else if (this.state === AppState.MAIN) {
-            // Animar la escena principal
             if (document.pointerLockElement === this.renderer.domElement) {
                 // Movimiento con Pointer Lock
                 this.velocity.x -= this.velocity.x * 10.0 * delta;
@@ -748,30 +732,25 @@ class SENA3DApp {
                     this.velocity.y = 0;
                 }
             } else {
-                // Movimiento con Orbit Controls
                 this.controls.update();
             }
             
-            // Actualizar mundo
             if (this.world) {
                 this.world.update(delta);
             }
             
-            // Actualizar VR
             if (this.vrManager) {
                 this.vrManager.update();
             }
             
             // Actualizar FPS
-            this.updateFPS(delta);
-            
-            // Actualizar coordenadas
-            this.updateCoordinates();
-            
-            // Actualizar hora del día
-            if (this.world) {
-                const dayTime = this.world.dayTime;
-                this.uiManager.updateTime(dayTime);
+            if (this.uiManager) {
+                this.uiManager.updateFPS(Math.round(1 / delta));
+                this.uiManager.updateCoords(this.camera.position.x, this.camera.position.y, this.camera.position.z);
+                
+                if (this.world) {
+                    this.uiManager.updateTime(this.world.dayTime);
+                }
             }
             
             // Renderizar
@@ -786,29 +765,23 @@ class SENA3DApp {
         
         this.prevTime = time;
     }
-    
-    updateFPS(delta) {
-        const fps = Math.round(1 / delta);
-        this.uiManager.updateFPS(fps);
-    }
-    
-    updateCoordinates() {
-        const position = this.camera.position;
-        this.uiManager.updateCoords(position.x, position.y, position.z);
-    }
 }
 
 // Iniciar la aplicación cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
     // Verificar si WebGL está disponible
-    if (!THREE.WebGLRenderer) {
-        alert('WebGL no está disponible en tu navegador. Por favor, actualiza tu navegador.');
+    try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (!gl) {
+            alert('WebGL no está disponible en tu navegador. Por favor, actualiza tu navegador o usa Chrome/Edge.');
+            return;
+        }
+    } catch (e) {
+        alert('WebGL no está disponible: ' + e.message);
         return;
     }
     
     // Crear la aplicación
     window.app = new SENA3DApp();
 });
-
-// Exportar para uso en otros módulos
-export default SENA3DApp;

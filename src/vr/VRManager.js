@@ -3,8 +3,8 @@
  * Compatibilidad con WebXR para experiencia inmersiva
  */
 
+// Importar Three.js desde CDN
 import * as THREE from 'three';
-import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 
 export class VRManager {
     constructor(renderer, camera, scene) {
@@ -66,7 +66,8 @@ export class VRManager {
         document.body.appendChild(buttonContainer);
         
         // Crear el botón de VR
-        const button = VRButton.createButton(this.renderer);
+        const button = document.createElement('button');
+        button.textContent = 'INICIAR VR';
         button.style.margin = '0';
         button.style.padding = '8px 16px';
         button.style.fontSize = '14px';
@@ -83,6 +84,10 @@ export class VRManager {
         
         button.addEventListener('mouseleave', () => {
             button.style.background = '#0066cc';
+        });
+        
+        button.addEventListener('click', () => {
+            this.toggleVR();
         });
         
         buttonContainer.appendChild(button);
@@ -463,6 +468,17 @@ export class VRManager {
         return this.isVREnabled;
     }
     
+    // Alternar VR
+    toggleVR() {
+        if (this.isVRSupported) {
+            if (this.isVREnabled) {
+                this.endVR();
+            } else {
+                this.startVR();
+            }
+        }
+    }
+    
     // Iniciar sesión VR manualmente
     async startVR() {
         if (this.isVRSupported && !this.isVREnabled) {
@@ -482,6 +498,13 @@ export class VRManager {
     async endVR() {
         if (this.isVREnabled) {
             await this.renderer.xr.setSession(null);
+        }
+    }
+    
+    // Redimensionar
+    onResize() {
+        if (this.renderer.xr.isPresenting) {
+            // Actualizar el reference space si es necesario
         }
     }
     
