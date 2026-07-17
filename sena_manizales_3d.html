@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SENA Manizales - Escenario 3D</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            max-width: 300px;
+        }
+        #info h3 {
+            margin: 0 0 10px 0;
+            color: #39A900;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div id="info">
+        <h3>SENA Manizales 3D</h3>
+        <p><strong>Controles:</strong></p>
+        <p>• Click izquierdo + arrastrar: Rotar cámara<br>
+        • Rueda del mouse: Zoom<br>
+        • Click derecho + arrastrar: Mover vista</p>
+    </div>
+    <div id="loading">Cargando escenario...</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+
+    <script>
+        let scene, camera, renderer, orbitControls, pointerControls;
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+        let prevTime = performance.now();
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x8dc7ed);
+            scene.fog = new THREE.Fog(0x8dc7ed, 80, 420);
+
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(120, 75, 120);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+            orbitControls.enableDamping = true;
+            orbitControls.dampingFactor = 0.05;
+            orbitControls.maxPolarAngle = Math.PI / 2.2;
+            orbitControls.minDistance = 25;
+            orbitControls.maxDistance = 280;
+
+            pointerControls = new THREE.PointerLockControls(camera, renderer.domElement);
+            scene.add(pointerControls.getObject());
+
+            const ambientLight = new THREE.HemisphereLight(0xeaebf4, 0x4a4a4a, 0.8);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.95);
+            directionalLight.position.set(100, 150, 100);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            directionalLight.shadow.camera.near = 0.5;
+            directionalLight.shadow.camera.far = 500;
+            directionalLight.shadow.camera.left = -140;
+            directionalLight.shadow.camera.right = 140;
+            directionalLight.shadow.camera.top = 140;
+            directionalLight.shadow.camera.bottom = -140;
+            scene.add(directionalLight);
+
+            createGround();
+            createRoads();
+            createBuildingClusters();
+            createParking();
+            createSidewalks();
+            createTrees();
+
+            document.getElementById('loading').style.display = 'none';
+            window.addEventListener('resize', onWindowResize, false);
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
+            renderer.domElement.addEventListener('click', () => pointerControls.lock());
+            document.addEventListener('pointerlockchange', onPointerLockChange);
+            animate();
+        }
+
+        function onPointerLockChange() {
+            const locked = document.pointerLockElement === renderer.domElement;
+            orbitControls.enabled = !locked;
+            document.getElementById('info').innerHTML = locked
+                ? '<h3>SENA Manizales 3D</h3><p>Modo exploración activo</p><p>WASD: mover</p><p>Mouse: mirar</p><p>Esc: salir de modo exploración</p>'
+                : '<h3>SENA Manizales 3D</h3><p>Click en el escenario para entrar en modo exploración.</p><p>WASD: mover.</p><p>También puedes usar el mouse para rotar con Orbit.</p>';
+        }
+
+        function createGround() {
+            const grassMat = new THREE.MeshStandardMaterial({ color: 0x3c8d3f, roughness: 0.95 });
+            const grassPlane = new THREE.Mesh(new THREE.PlaneGeometry(280, 240), grassMat);
+            grassPlane.rotation.x = -Math.PI / 2;
+            grassPlane.receiveShadow = true;
+            scene.add(grassPlane);
+
+            const soilMat = new THREE.MeshStandardMaterial({ color: 0x5b4a31, roughness: 0.95 });
+            const field = new THREE.Mesh(new THREE.PlaneGeometry(280, 30), soilMat);
+            field.rotation.x = -Math.PI / 2;
+            field.position.z = 110;
+            scene.add(field);
+        }
+
+        function createRoads() {
+            const asphalt = new THREE.MeshStandardMaterial({ color: 0x4a4a4a, roughness: 0.9 });
+            const roadMain = new THREE.Mesh(new THREE.PlaneGeometry(260, 22), asphalt);
+            roadMain.rotation.x = -Math.PI / 2;
+            roadMain.position.z = -92;
+            roadMain.receiveShadow = true;
+            scene.add(roadMain);
+
+            const roadSide = new THREE.Mesh(new THREE.PlaneGeometry(20, 180), asphalt);
+            roadSide.rotation.x = -Math.PI / 2;
+            roadSide.position.set(120, 0.01, 0);
+            scene.add(roadSide);
+
+            const lineMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
+            const centerLine = new THREE.Mesh(new THREE.PlaneGeometry(2, 180), lineMat);
+            centerLine.rotation.x = -Math.PI / 2;
+            centerLine.position.set(120, 0.02, 0);
+            scene.add(centerLine);
+        }
+
+        function createBuildingClusters() {
+            const buildingColor = 0xf7f7f7;
+            const stripeColor = 0x0f4f93;
+
+            const rows = [
+                { z: -32, xs: [-95, -30, 35, 100] },
+                { z: 8, xs: [-95, -30, 35, 100] },
+                { z: 48, xs: [-95, -30, 35, 100] }
+            ];
+
+            rows.forEach(row => {
+                row.xs.forEach(x => {
+                    createGabledBlock(x, row.z, 48, 28, 12, buildingColor, stripeColor);
+                });
+            });
+
+            addCentralWalkways();
+            createAdministration(-75, 90, 46, 24, 12);
+            createAdministration(75, 90, 46, 24, 12);
+        }
+
+        function createGabledBlock(x, z, width, depth, height, baseColor, accentColor) {
+            const group = new THREE.Group();
+            const wallMat = new THREE.MeshStandardMaterial({ color: baseColor, roughness: 0.78 });
+            const accentMat = new THREE.MeshStandardMaterial({ color: accentColor, roughness: 0.82 });
+            const windowMat = new THREE.MeshStandardMaterial({ color: 0x1f5d9a, emissive: 0x112d58, emissiveIntensity: 0.25, roughness: 0.08, metalness: 0.15 });
+
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(width - 0.5, depth - 0.5), new THREE.MeshStandardMaterial({ color: 0xdedede, roughness: 0.96 }));
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = 0.05;
+            group.add(floor);
+
+            const thickness = 0.7;
+            const wallHeight = height;
+            const doorWidth = 7;
+
+            const leftWall = new THREE.Mesh(new THREE.BoxGeometry(thickness, wallHeight, depth), wallMat);
+            leftWall.position.set(-width / 2 + thickness / 2, wallHeight / 2, 0);
+            group.add(leftWall);
+
+            const rightWall = leftWall.clone();
+            rightWall.position.set(width / 2 - thickness / 2, wallHeight / 2, 0);
+            group.add(rightWall);
+
+            const backWall = new THREE.Mesh(new THREE.BoxGeometry(width, wallHeight, thickness), wallMat);
+            backWall.position.set(0, wallHeight / 2, -depth / 2 + thickness / 2);
+            group.add(backWall);
+
+            const frontLeft = new THREE.Mesh(new THREE.BoxGeometry((width - doorWidth) / 2 - 0.5, wallHeight, thickness), wallMat);
+            frontLeft.position.set(-doorWidth / 2 - ((width - doorWidth) / 2 - 0.5) / 2, wallHeight / 2, depth / 2 - thickness / 2);
+            group.add(frontLeft);
+
+            const frontRight = frontLeft.clone();
+            frontRight.position.set(doorWidth / 2 + ((width - doorWidth) / 2 - 0.5) / 2, wallHeight / 2, depth / 2 - thickness / 2);
+            group.add(frontRight);
+
+            const stripe = new THREE.Mesh(new THREE.BoxGeometry(width - 2, 1.4, 0.8), accentMat);
+            stripe.position.set(0, wallHeight * 0.58, depth / 2 - thickness - 0.05);
+            group.add(stripe);
+
+            const windows = Math.max(2, Math.floor((width - 10) / 10));
+            for (let i = 0; i < windows; i++) {
+                const xPos = -width / 2 + 8 + i * 10;
+                const win = new THREE.Mesh(new THREE.BoxGeometry(4, 4, 0.1), windowMat);
+                win.position.set(xPos, wallHeight * 0.55, depth / 2 - thickness - 0.01);
+                group.add(win);
+
+                const backWin = win.clone();
+                backWin.position.set(xPos, wallHeight * 0.55, -depth / 2 + thickness + 0.01);
+                group.add(backWin);
+            }
+
+            const roof = createGableRoof(width + 2, depth + 4, 4.5, accentColor);
+            roof.position.set(0, wallHeight + 1.8, 0);
+            group.add(roof);
+
+            group.position.set(x, 0, z);
+            scene.add(group);
+            return group;
+        }
+
+        function createGableRoof(width, depth, height, roofColor) {
+            const roofMat = new THREE.MeshStandardMaterial({ color: roofColor, roughness: 0.75, side: THREE.DoubleSide });
+            const roof = new THREE.Group();
+
+            const sideA = new THREE.Mesh(new THREE.PlaneGeometry(width, depth * 0.56), roofMat);
+            sideA.rotation.set(Math.PI / 2 - 0.75, 0, 0);
+            sideA.position.set(0, height / 2, -depth * 0.14);
+            roof.add(sideA);
+
+            const sideB = new THREE.Mesh(new THREE.PlaneGeometry(width, depth * 0.56), roofMat);
+            sideB.rotation.set(Math.PI / 2 + 0.75, 0, 0);
+            sideB.position.set(0, height / 2, depth * 0.14);
+            roof.add(sideB);
+
+            const ridge = new THREE.Mesh(new THREE.BoxGeometry(width + 1, 0.4, 0.4), roofMat);
+            ridge.position.set(0, height * 0.62, 0);
+            roof.add(ridge);
+
+            return roof;
+        }
+
+        function addCentralWalkways() {
+            const pathMat = new THREE.MeshStandardMaterial({ color: 0x777777, roughness: 0.9 });
+            const pathA = new THREE.Mesh(new THREE.BoxGeometry(20, 0.15, 130), pathMat);
+            pathA.position.set(0, 0.08, 20);
+            scene.add(pathA);
+
+            const pathB = new THREE.Mesh(new THREE.BoxGeometry(160, 0.15, 8), pathMat);
+            pathB.position.set(0, 0.08, -20);
+            scene.add(pathB);
+
+            const pathC = new THREE.Mesh(new THREE.BoxGeometry(160, 0.15, 8), pathMat);
+            pathC.position.set(0, 0.08, 45);
+            scene.add(pathC);
+        }
+
+        function createAdministration(x, z, width, depth, height) {
+            const group = new THREE.Group();
+            const baseMat = new THREE.MeshStandardMaterial({ color: 0xfafafa, roughness: 0.78 });
+            const accentMat = new THREE.MeshStandardMaterial({ color: 0x0f4f93, roughness: 0.8 });
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(width - 0.5, depth - 0.5), new THREE.MeshStandardMaterial({ color: 0xf0efee, roughness: 0.9 }));
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = 0.05;
+            group.add(floor);
+
+            const wall = new THREE.BoxGeometry(width, height, 0.6);
+            const front = new THREE.Mesh(wall, baseMat);
+            front.position.set(0, height / 2, depth / 2 - 0.3);
+            group.add(front);
+
+            const back = front.clone();
+            back.position.set(0, height / 2, -depth / 2 + 0.3);
+            group.add(back);
+
+            const left = new THREE.Mesh(new THREE.BoxGeometry(0.6, height, depth), baseMat);
+            left.position.set(-width / 2 + 0.3, height / 2, 0);
+            group.add(left);
+
+            const right = left.clone();
+            right.position.set(width / 2 - 0.3, height / 2, 0);
+            group.add(right);
+
+            const blueBar = new THREE.Mesh(new THREE.BoxGeometry(width - 1, 1.5, 0.8), accentMat);
+            blueBar.position.set(0, height * 0.6, depth / 2 - 0.9);
+            group.add(blueBar);
+
+            const sign = new THREE.Mesh(new THREE.BoxGeometry(12, 3.5, 0.4), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 }));
+            sign.position.set(0, height * 0.75, depth / 2 - 0.7);
+            group.add(sign);
+
+            group.position.set(x, 0, z);
+            scene.add(group);
+        }
+
+        function createParking() {
+            const asphalt = new THREE.MeshStandardMaterial({ color: 0x4c4c4c, roughness: 0.9 });
+            const lot = new THREE.Mesh(new THREE.PlaneGeometry(72, 30), asphalt);
+            lot.rotation.x = -Math.PI / 2;
+            lot.position.set(-40, 0.05, -62);
+            lot.receiveShadow = true;
+            scene.add(lot);
+
+            const lineMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
+            for (let i = 0; i < 6; i++) {
+                const line = new THREE.Mesh(new THREE.PlaneGeometry(1, 26), lineMat);
+                line.rotation.x = -Math.PI / 2;
+                line.position.set(-70 + i * 12, 0.08, -62);
+                scene.add(line);
+            }
+        }
+
+        function createSidewalks() {
+            const pathMat = new THREE.MeshStandardMaterial({ color: 0x7e7e7e, roughness: 0.9 });
+            const sidewalk1 = new THREE.Mesh(new THREE.BoxGeometry(80, 0.15, 6), pathMat);
+            sidewalk1.position.set(0, 0.08, -5);
+            scene.add(sidewalk1);
+
+            const sidewalk2 = new THREE.Mesh(new THREE.BoxGeometry(20, 0.15, 100), pathMat);
+            sidewalk2.position.set(-95, 0.08, -20);
+            scene.add(sidewalk2);
+        }
+
+        function createTrees() {
+            const positions = [
+                [-120, -20], [-90, -50], [-100, 60], [-50, 80], [20, 90], [80, 88], [110, 10], [100, -35], [40, -95], [-10, -90], [-130, 35], [-75, 50]
+            ];
+            positions.forEach(([x, z]) => createTree(x, z));
+        }
+
+        function createTree(x, z) {
+            const tree = new THREE.Group();
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 4.5, 8), new THREE.MeshStandardMaterial({ color: 0x6b4226 }));
+            trunk.position.y = 2.25;
+            tree.add(trunk);
+
+            const leaves = new THREE.Mesh(new THREE.SphereGeometry(3.6, 12, 12), new THREE.MeshStandardMaterial({ color: 0x2f6a2f, roughness: 0.95 }));
+            leaves.position.y = 6;
+            tree.add(leaves);
+
+            tree.position.set(x, 0, z);
+            scene.add(tree);
+        }
+
+        function onKeyDown(event) {
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'KeyW': moveForward = true; break;
+                case 'ArrowLeft':
+                case 'KeyA': moveLeft = true; break;
+                case 'ArrowDown':
+                case 'KeyS': moveBackward = true; break;
+                case 'ArrowRight':
+                case 'KeyD': moveRight = true; break;
+            }
+        }
+
+        function onKeyUp(event) {
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'KeyW': moveForward = false; break;
+                case 'ArrowLeft':
+                case 'KeyA': moveLeft = false; break;
+                case 'ArrowDown':
+                case 'KeyS': moveBackward = false; break;
+                case 'ArrowRight':
+                case 'KeyD': moveRight = false; break;
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = performance.now();
+            const delta = (time - prevTime) / 1000;
+
+            if (document.pointerLockElement === renderer.domElement) {
+                velocity.x -= velocity.x * 10.0 * delta;
+                velocity.z -= velocity.z * 10.0 * delta;
+
+                direction.z = Number(moveForward) - Number(moveBackward);
+                direction.x = Number(moveRight) - Number(moveLeft);
+                direction.normalize();
+
+                if (moveForward || moveBackward) velocity.z -= direction.z * 70.0 * delta;
+                if (moveLeft || moveRight) velocity.x -= direction.x * 70.0 * delta;
+
+                pointerControls.moveRight(-velocity.x * delta);
+                pointerControls.moveForward(-velocity.z * delta);
+            } else {
+                orbitControls.update();
+            }
+
+            renderer.render(scene, camera);
+            prevTime = time;
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Espacio SE - Exploración 3D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Inter', sans-serif; background: #0a0f1a; }
+    #app { width: 100%; height: 100%; }
+    canvas { display: block; width: 100%; height: 100%; }
+
+    #ui-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 10; opacity: 0; transition: opacity 0.8s ease; }
+    #ui-overlay.visible { opacity: 1; }
+
+    .panel {
+      pointer-events: auto;
+      background: rgba(8, 12, 24, 0.88);
+      border: 1px solid rgba(100, 180, 255, 0.15);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #d0e0f8;
+      font-size: 12px;
+      backdrop-filter: blur(10px);
+      line-height: 1.4;
+    }
+
+    #controls-panel {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      width: 200px;
+    }
+
+    #controls-panel h3 {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64b4ff;
+      margin-bottom: 8px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(100, 180, 255, 0.15);
+      padding-bottom: 6px;
+    }
+
+    .ctrl-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 4px 10px;
+      align-items: center;
+    }
+
+    .ctrl-key {
+      background: rgba(100, 180, 255, 0.12);
+      border: 1px solid rgba(100, 180, 255, 0.25);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-family: 'SF Mono', 'Consolas', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      color: #64b4ff;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .ctrl-desc {
+      font-size: 11px;
+      color: #8aa8c8;
+    }
+
+    #room-panel {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      min-width: 180px;
+      text-align: center;
+      background: linear-gradient(135deg, rgba(100, 180, 255, 0.12), rgba(8, 12, 24, 0.88));
+      border-color: rgba(100, 180, 255, 0.25);
+    }
+
+    #room-panel h3 {
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(100, 180, 255, 0.6);
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    #room-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #64b4ff;
+      margin-bottom: 2px;
+    }
+
+    #room-info {
+      font-size: 11px;
+      color: #6a8ab0;
+    }
+
+    #status-bar {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      padding: 8px 18px;
+    }
+
+    #status-bar span {
+      font-family: 'SF Mono', 'Consolas', monospace;
+      font-size: 11px;
+      color: #6a8ab0;
+    }
+
+    #status-bar .fps { color: #64b4ff; font-weight: 600; }
+
+    #crosshair {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 6px;
+      height: 6px;
+      pointer-events: none;
+      z-index: 20;
+      opacity: 0;
+      transition: opacity 0.15s;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(100, 180, 255, 0.8);
+    }
+    #crosshair.active { opacity: 1; }
+
+    #interaction-hint {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(8, 12, 24, 0.85);
+      border: 1px solid rgba(100, 180, 255, 0.3);
+      border-radius: 8px;
+      padding: 10px 20px;
+      color: #64b4ff;
+      font-size: 12px;
+      display: none;
+      z-index: 15;
+      backdrop-filter: blur(8px);
+    }
+    #interaction-hint.visible {
+      display: block;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      background: #050810;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      gap: 20px;
+      transition: opacity 0.5s ease;
+    }
+    #loading-screen.hidden { opacity: 0; pointer-events: none; }
+
+    .loader {
+      width: 40px;
+      height: 40px;
+      border: 2px solid rgba(100, 180, 255, 0.1);
+      border-top-color: #64b4ff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #loading-text {
+      color: #64b4ff;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .minimap {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      width: 160px;
+      height: 160px;
+      border: 1px solid rgba(100, 180, 255, 0.2);
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(5, 8, 16, 0.9);
+      pointer-events: none;
+    }
+    .minimap canvas { width: 100%; height: 100%; display: block; }
+  </style>
+</head>
+<body>
+  <div id="loading-screen" class="hidden">
+    <div class="loader"></div>
+    <div id="loading-text">Cargando entorno</div>
+  </div>
+
+  <div id="intro" style="position:fixed;inset:0;z-index:200;overflow:hidden;background:#050008;">
+    <div id="intro-canvas" style="position:absolute;inset:0;width:100%;height:100%;"></div>
+  </div>
+
+  <div id="crosshair"></div>
+  <div id="interaction-hint">Presiona <strong>E</strong> para abrir puerta</div>
+
+  <div id="ui-overlay">
+    <div id="controls-panel" class="panel">
+      <h3>Controles</h3>
+      <div class="ctrl-grid">
+        <span class="ctrl-key">W</span><span class="ctrl-desc">Adelante</span>
+        <span class="ctrl-key">S</span><span class="ctrl-desc">Atrás</span>
+        <span class="ctrl-key">A</span><span class="ctrl-desc">Izquierda</span>
+        <span class="ctrl-key">D</span><span class="ctrl-desc">Derecha</span>
+        <span class="ctrl-key">Shift</span><span class="ctrl-desc">Correr</span>
+        <span class="ctrl-key">Espacio</span><span class="ctrl-desc">Saltar</span>
+        <span class="ctrl-key">C</span><span class="ctrl-desc">Agacharse</span>
+        <span class="ctrl-key">E</span><span class="ctrl-desc">Interactuar</span>
+        <span class="ctrl-key">M</span><span class="ctrl-desc">Silenciar</span>
+        <span class="ctrl-key">N</span><span class="ctrl-desc">Clima</span>
+        <span class="ctrl-key">T</span><span class="ctrl-desc">Tour</span>
+        <span class="ctrl-key">Esc</span><span class="ctrl-desc">Soltar mouse</span>
+      </div>
+    </div>
+
+    <div id="room-panel" class="panel">
+      <h3>Ubicación</h3>
+      <div id="room-name">Exterior</div>
+      <div id="room-info">Campus SENA Manizales</div>
+    </div>
+
+    <div id="status-bar" class="panel">
+      <span id="mute-indicator" style="cursor:pointer;font-size:18px;margin-right:8px;">🔊</span>
+      <span id="weather-indicator" style="margin-right:8px;font-size:12px;color:#88ff99;">☀️ Despejado</span>
+      <span id="coords">X: 0 &middot; Z: 0 &middot; Y: 0</span>
+      <span class="fps" id="fps">FPS: --</span>
+    </div>
+  </div>
+
+  <div class="minimap">
+    <canvas id="minimap"></canvas>
+  </div>
+
+  <div id="app"></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
