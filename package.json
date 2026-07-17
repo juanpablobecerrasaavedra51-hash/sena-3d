@@ -1,17 +1,29 @@
 {
-  "name": "sena-manizales-3d",
-  "private": true,
-  "version": "1.0.0",
+  "name": "sena-3d",
+  "version": "2.0.0",
+  "description": "SENA Manizales - Experiencia 3D Inmersiva con intro estilo Jujutsu Kaisen",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
-  },
-  "devDependencies": {
-    "vite": "^5.4.0"
+    "preview": "vite preview",
+    "start": "vite"
   },
   "dependencies": {
-    "three": "^0.167.0"
-  }
+    "three": "^0.160.0",
+    "gsap": "^3.12.2"
+  },
+  "devDependencies": {
+    "vite": "^5.0.10"
+  },
+  "keywords": [
+    "3d",
+    "sena",
+    "manizales",
+    "jujutsu-kaisen",
+    "threejs",
+    "webgl"
+  ],
+  "author": "Juan Pablo Becerra Saavedra",
+  "license": "MIT"
 }
